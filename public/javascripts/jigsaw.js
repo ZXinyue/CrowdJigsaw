@@ -149,12 +149,19 @@ $('.puzzle-image').css('margin', '-' + imgHeight / 2 + 'px 0 0 -' + imgWidth / 2
 var downTime, alreadyDragged, dragTime, draggingGroup;
 var mousedowned = false;
 var timeoutFunction;
+// function onMouseDown(event) {
+//     mousedowned = true;
+//     var tilesCount = puzzle.pickTile(event.point);
+//     console.log("tilescount",tilesCount);
+//     if (tilesCount > 0) {
+//         timeoutFunction = setTimeout(puzzle.dragTileOrTiles, 500);
+//     }
+// }
+
 function onMouseDown(event) {
-    mousedowned = true;
-    var tilesCount = puzzle.pickTile(event.point);
-    if (tilesCount > 0) {
-        timeoutFunction = setTimeout(puzzle.dragTileOrTiles, 500);
-    }
+    puzzle.pickTile(event.point);
+    puzzle.dragOnlyTile();
+    console.log("mouse down");
 }
 
 function onFrame(event) {
@@ -162,10 +169,15 @@ function onFrame(event) {
     puzzle.animation();
 }
 
+// function onMouseUp(event) {
+//     if (timeoutFunction) {
+//         clearTimeout(timeoutFunction);
+//     }
+//     puzzle.releaseTile();
+//     mousedowned = false;
+// }
+
 function onMouseUp(event) {
-    if (timeoutFunction) {
-        clearTimeout(timeoutFunction);
-    }
     puzzle.releaseTile();
     mousedowned = false;
 }
@@ -175,9 +187,9 @@ function onMouseDrag(event) {
     var ca = document.getElementById("canvas");
     ca.getContext("2d").clearRect(0, 0, ca.width, ca.height);
     mousedowned = true;
-    if (timeoutFunction) {
-        clearTimeout(timeoutFunction);
-    }
+    // if (timeoutFunction) {
+    //     clearTimeout(timeoutFunction);
+    // }
     puzzle.dragTile(event.delta);
 }
 
@@ -305,7 +317,8 @@ function JigsawPuzzle(config) {
     this.centerPositon = new Point(880, 410);
     this.candidateAreaPosition = this.centerPositon - new Point(this.tilesPerRow * this.tileWidth + 100, this.tilesPerColumn * this.tileWidth / 2);
     this.playerAreaPosition = this.centerPositon - new Point(-100, this.tilesPerColumn * this.tileWidth / 2);
-    
+    this.candidateAreaArray = new Array();
+    this.playerAreaArray = new Array();
 
     this.dragMode = config.dragMode;
 
@@ -643,7 +656,7 @@ function JigsawPuzzle(config) {
 
         clearTimeout(t);
 
-        instance.calcHintedTile();
+        //instance.calcHintedTile();
 
         // for (var i = 0; i < instance.tiles.length; i++) {
         //     var tile = instance.tiles[i];
@@ -733,6 +746,8 @@ function JigsawPuzzle(config) {
                 var position = instance.candidateAreaPosition + new Point((x + 0.5) * instance.tileWidth, (y + 0.5) * instance.tileWidth);
                 tile.position = position;
                 tile.cellPosition = new Point(x, y);
+                tile.area = 0;
+                instance.candidateAreaArray[y*xTileCount+x]=tile;
             }
         }
     }
@@ -1171,12 +1186,13 @@ function JigsawPuzzle(config) {
             instance.draging = true;
 
             var pos = new Point(instance.selectedTile[0].position.x, instance.selectedTile[0].position.y);
-            for (var i = 0; i < instance.selectedTile.length; i++) {
-                var tile = instance.selectedTile[i];
-                tile.opacity = 0.5;
-                tile.position = pos + tile.relativePosition * instance.tileWidth;
-                tile.originPosition = tile.cellPosition;
-            }
+            var tile = instance.selectedTile[0];
+            console.log("pick tile",tile);
+            tile.opacity = 0.5;
+            tile.position = pos;
+            tile.originPosition = tile.position;
+            tile.originCellPosition = tile.cellPosition;
+            tile.originArea = tile.area;
             return instance.selectedTile.length;
         }
         return 0;
@@ -1212,149 +1228,175 @@ function JigsawPuzzle(config) {
         }
     }
 
-    function checkConflict(tiles, centerCellPosition, selectedGroupTiles) {
-        if (Math.abs(centerCellPosition.x) > 70 || Math.abs(centerCellPosition.y) > 50) {
-            return true;
-        }
-        var hasConflict = false;
-        var needToMove = true;
-        if (this.allowOverlap)
-            return hasConflict;
-        var onlyOneTile = (tiles.length == 1);
-        for (var i = 0; i < tiles.length; i++) {
-            if (hasConflict && !needToMove)
-                break;
-            var tile = tiles[i];
-            var tileIndex = getTileIndex(tile);
-
-            var cellPosition = centerCellPosition + tile.relativePosition;
-            var roundPosition = cellPosition * instance.tileWidth;
-
-            var alreadyPlacedTile = (getTileAtCellPosition(cellPosition) != undefined);
-
-            if (alreadyPlacedTile && (typeof selectedGroupTiles !== 'undefined')) {
-                var theTile = getTileAtCellPosition(cellPosition);
-                for (var j = 0; j < selectedGroupTiles.length; j++) {
-                    if (selectedGroupTiles[j] == theTile) {
-                        needToMove = false;
-                        break;
-                    }
-                }
+    function checkConflict(tile) {
+        var tilePosition = tile.position;
+        var xPosition = Math.floor((tilePosition.x - instance.candidateAreaPosition.x)/instance.tileWidth);
+        var yPosition = Math.floor((tilePosition.y - instance.candidateAreaPosition.y)/instance.tileWidth);
+        if(xPosition>=0 && xPosition<instance.tilesPerRow && yPosition>=0 && yPosition<tilesPerColumn){
+            if(!instance.candidateAreaArray[instance.tilesPerRow*yPosition+xPosition]){
+                return [false, 0, xPosition, yPosition];
             }
-            hasConflict = hasConflict || alreadyPlacedTile;
-            if (!hasConflict && instance.tileShape != "voronoi") {
-                var topTile = getTileAtCellPosition(cellPosition + new Point(0, -1));
-                var rightTile = getTileAtCellPosition(cellPosition + new Point(1, 0));
-                var bottomTile = getTileAtCellPosition(cellPosition + new Point(0, 1));
-                var leftTile = getTileAtCellPosition(cellPosition + new Point(-1, 0));
-
-                var hintAroundTiles = undefined;
-                if (instance.hintsShowing) {
-                    hintAroundTiles = instance.hintAroundTilesMap[tileIndex];
-                }
-
-                var topTileConflict = (topTile != undefined) && (!(topTile.shape.bottomTab + tile.shape.topTab == 0) ||
-                    (instance.tileShape == 'curved' && topTile.shape.bottomTab == 0 && tile.shape.topTab == 0));
-                if (hintAroundTiles) {
-                    topTileConflict = topTileConflict || (topTile != undefined) && (getTileIndex(topTile) != hintAroundTiles[0]);
-                    if (topTileConflict && tile.aroundTiles[0] < 0 && onlyOneTile) {
-                        var canMoveAway = false;//moveAwayDelay(topTile, 0);
-                        if (canMoveAway) {
-                            topTileConflict = false;
-                        }
-                    }
-                }
-                if (topTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
-                    for (var j = 0; j < selectedGroupTiles.length; j++) {
-                        if (selectedGroupTiles[j] == topTile) {
-                            needToMove = false;
-                            break;
-                        }
-                    }
-                }
-
-                var rightTileConflict = (rightTile != undefined) && (!(rightTile.shape.leftTab + tile.shape.rightTab == 0) ||
-                    (instance.tileShape == 'curved' && rightTile.shape.leftTab == 0 && tile.shape.rightTab == 0));
-                if (hintAroundTiles) {
-                    rightTileConflict = rightTileConflict || (rightTile != undefined) && (getTileIndex(rightTile) != hintAroundTiles[1]);
-                    if (rightTileConflict && tile.aroundTiles[1] < 0 && onlyOneTile) {
-                        var canMoveAway = false;//moveAwayDelay(rightTile, 1);
-                        if (canMoveAway) {
-                            rightTileConflict = false;
-                        }
-                    }
-                }
-                if (rightTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
-                    for (var j = 0; j < selectedGroupTiles.length; j++) {
-                        if (selectedGroupTiles[j] == rightTile) {
-                            needToMove = false;
-                            break;
-                        }
-                    }
-                }
-
-                var bottomTileConflict = (bottomTile != undefined) && (!(bottomTile.shape.topTab + tile.shape.bottomTab == 0) ||
-                    (instance.tileShape == 'curved' && bottomTile.shape.topTab == 0 && tile.shape.bottomTab == 0));
-                if (hintAroundTiles) {
-                    bottomTileConflict = bottomTileConflict || (bottomTile != undefined) && (getTileIndex(bottomTile) != hintAroundTiles[2]);
-                    if (bottomTileConflict && tile.aroundTiles[2] < 0 && onlyOneTile) {
-                        var canMoveAway = false;//moveAwayDelay(bottomTile, 2);
-                        if (canMoveAway) {
-                            bottomTileConflict = false;
-                        }
-                    }
-                }
-                if (bottomTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
-                    for (var j = 0; j < selectedGroupTiles.length; j++) {
-                        if (selectedGroupTiles[j] == bottomTile) {
-                            needToMove = false;
-                            break;
-                        }
-                    }
-                }
-
-                var leftTileConflict = (leftTile != undefined) && (!(leftTile.shape.rightTab + tile.shape.leftTab == 0) ||
-                    (instance.tileShape == 'curved' && leftTile.shape.rightTab == 0 && tile.shape.leftTab == 0));
-                if (hintAroundTiles) {
-                    leftTileConflict = leftTileConflict || (leftTile != undefined) && (getTileIndex(leftTile) != hintAroundTiles[3]);
-                    if (leftTileConflict && tile.aroundTiles[3] < 0 && onlyOneTile) {
-                        var canMoveAway = false;//moveAwayDelay(leftTile, 3);
-                        if (canMoveAway) {
-                            leftTileConflict = false;
-                        }
-                    }
-                }
-                if (leftTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
-                    for (var j = 0; j < selectedGroupTiles.length; j++) {
-                        if (selectedGroupTiles[j] == leftTile) {
-                            needToMove = false;
-                            break;
-                        }
-                    }
-                }
-
-                var aroundConflict = topTileConflict || bottomTileConflict || rightTileConflict || leftTileConflict;
-                var hasConflict = aroundConflict || hasConflict;
+            else{
+                return [true,null,null,null];
             }
         }
-        if (!hasConflict) {
-            allMoveAway();
+        var xPosition = Math.floor((tilePosition.x - instance.playerAreaPosition.x)/instance.tileWidth);
+        var yPosition = Math.floor((tilePosition.y - instance.playerAreaPosition.y)/instance.tileWidth);
+        if(xPosition>=0 && xPosition<instance.tilesPerRow && yPosition>=0 && yPosition<tilesPerColumn){
+            if(!instance.playerAreaArray[instance.tilesPerRow*yPosition+xPosition]){
+                return [false, 1, xPosition, yPosition];
+            }
+            else{
+                return [true,null,null,null];
+            }
         }
-        return [hasConflict, needToMove];
+        return [true,null,null,null];
+
+
     }
+    // function checkConflict(tiles, centerCellPosition, selectedGroupTiles) {
+    //     if (Math.abs(centerCellPosition.x) > 70 || Math.abs(centerCellPosition.y) > 50) {
+    //         return true;
+    //     }
+    //     var hasConflict = false;
+    //     var needToMove = true;
+    //     if (this.allowOverlap)
+    //         return hasConflict;
+    //     var onlyOneTile = (tiles.length == 1);
+    //     for (var i = 0; i < tiles.length; i++) {
+    //         if (hasConflict && !needToMove)
+    //             break;
+    //         var tile = tiles[i];
+    //         var tileIndex = getTileIndex(tile);
+    //
+    //         var cellPosition = centerCellPosition + tile.relativePosition;
+    //         var roundPosition = cellPosition * instance.tileWidth;
+    //
+    //         var alreadyPlacedTile = (getTileAtCellPosition(cellPosition) != undefined);
+    //
+    //         if (alreadyPlacedTile && (typeof selectedGroupTiles !== 'undefined')) {
+    //             var theTile = getTileAtCellPosition(cellPosition);
+    //             for (var j = 0; j < selectedGroupTiles.length; j++) {
+    //                 if (selectedGroupTiles[j] == theTile) {
+    //                     needToMove = false;
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //         hasConflict = hasConflict || alreadyPlacedTile;
+    //         if (!hasConflict && instance.tileShape != "voronoi") {
+    //             var topTile = getTileAtCellPosition(cellPosition + new Point(0, -1));
+    //             var rightTile = getTileAtCellPosition(cellPosition + new Point(1, 0));
+    //             var bottomTile = getTileAtCellPosition(cellPosition + new Point(0, 1));
+    //             var leftTile = getTileAtCellPosition(cellPosition + new Point(-1, 0));
+    //
+    //             var hintAroundTiles = undefined;
+    //             if (instance.hintsShowing) {
+    //                 hintAroundTiles = instance.hintAroundTilesMap[tileIndex];
+    //             }
+    //
+    //             var topTileConflict = (topTile != undefined) && (!(topTile.shape.bottomTab + tile.shape.topTab == 0) ||
+    //                 (instance.tileShape == 'curved' && topTile.shape.bottomTab == 0 && tile.shape.topTab == 0));
+    //             if (hintAroundTiles) {
+    //                 topTileConflict = topTileConflict || (topTile != undefined) && (getTileIndex(topTile) != hintAroundTiles[0]);
+    //                 if (topTileConflict && tile.aroundTiles[0] < 0 && onlyOneTile) {
+    //                     var canMoveAway = false;//moveAwayDelay(topTile, 0);
+    //                     if (canMoveAway) {
+    //                         topTileConflict = false;
+    //                     }
+    //                 }
+    //             }
+    //             if (topTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
+    //                 for (var j = 0; j < selectedGroupTiles.length; j++) {
+    //                     if (selectedGroupTiles[j] == topTile) {
+    //                         needToMove = false;
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //
+    //             var rightTileConflict = (rightTile != undefined) && (!(rightTile.shape.leftTab + tile.shape.rightTab == 0) ||
+    //                 (instance.tileShape == 'curved' && rightTile.shape.leftTab == 0 && tile.shape.rightTab == 0));
+    //             if (hintAroundTiles) {
+    //                 rightTileConflict = rightTileConflict || (rightTile != undefined) && (getTileIndex(rightTile) != hintAroundTiles[1]);
+    //                 if (rightTileConflict && tile.aroundTiles[1] < 0 && onlyOneTile) {
+    //                     var canMoveAway = false;//moveAwayDelay(rightTile, 1);
+    //                     if (canMoveAway) {
+    //                         rightTileConflict = false;
+    //                     }
+    //                 }
+    //             }
+    //             if (rightTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
+    //                 for (var j = 0; j < selectedGroupTiles.length; j++) {
+    //                     if (selectedGroupTiles[j] == rightTile) {
+    //                         needToMove = false;
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //
+    //             var bottomTileConflict = (bottomTile != undefined) && (!(bottomTile.shape.topTab + tile.shape.bottomTab == 0) ||
+    //                 (instance.tileShape == 'curved' && bottomTile.shape.topTab == 0 && tile.shape.bottomTab == 0));
+    //             if (hintAroundTiles) {
+    //                 bottomTileConflict = bottomTileConflict || (bottomTile != undefined) && (getTileIndex(bottomTile) != hintAroundTiles[2]);
+    //                 if (bottomTileConflict && tile.aroundTiles[2] < 0 && onlyOneTile) {
+    //                     var canMoveAway = false;//moveAwayDelay(bottomTile, 2);
+    //                     if (canMoveAway) {
+    //                         bottomTileConflict = false;
+    //                     }
+    //                 }
+    //             }
+    //             if (bottomTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
+    //                 for (var j = 0; j < selectedGroupTiles.length; j++) {
+    //                     if (selectedGroupTiles[j] == bottomTile) {
+    //                         needToMove = false;
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //
+    //             var leftTileConflict = (leftTile != undefined) && (!(leftTile.shape.rightTab + tile.shape.leftTab == 0) ||
+    //                 (instance.tileShape == 'curved' && leftTile.shape.rightTab == 0 && tile.shape.leftTab == 0));
+    //             if (hintAroundTiles) {
+    //                 leftTileConflict = leftTileConflict || (leftTile != undefined) && (getTileIndex(leftTile) != hintAroundTiles[3]);
+    //                 if (leftTileConflict && tile.aroundTiles[3] < 0 && onlyOneTile) {
+    //                     var canMoveAway = false;//moveAwayDelay(leftTile, 3);
+    //                     if (canMoveAway) {
+    //                         leftTileConflict = false;
+    //                     }
+    //                 }
+    //             }
+    //             if (leftTileConflict && (typeof selectedGroupTiles !== 'undefined')) {
+    //                 for (var j = 0; j < selectedGroupTiles.length; j++) {
+    //                     if (selectedGroupTiles[j] == leftTile) {
+    //                         needToMove = false;
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //
+    //             var aroundConflict = topTileConflict || bottomTileConflict || rightTileConflict || leftTileConflict;
+    //             var hasConflict = aroundConflict || hasConflict;
+    //         }
+    //     }
+    //     if (!hasConflict) {
+    //         allMoveAway();
+    //     }
+    //     return [hasConflict, needToMove];
+    // }
 
-    function placeTile(tile, cellPosition) {
-        var roundPosition = cellPosition * instance.tileWidth;
-        if (instance.hintsShowing) {
-            tile.preStep = instance.steps - 1;
-        }
-        else {
-            tile.preStep = instance.steps;
-        }
-        tile.preCellPosition = tile.cellPosition;
-        tile.position = roundPosition;
+    function placeTile(tile, newPosition, newArea, newx, newy) {
+        // var roundPosition = cellPosition * instance.tileWidth;
+        // if (instance.hintsShowing) {
+        //     tile.preStep = instance.steps - 1;
+        // }
+        // else {
+        //     tile.preStep = instance.steps;
+        // }
+        // tile.preCellPosition = tile.cellPosition;
+        tile.position = newPosition;
         if (tile.originPosition) {
-            if (cellPosition == tile.originPosition) {
+            if (newPosition == tile.originPosition) {
                 tile.positionMoved = false;
             }
             else {
@@ -1364,8 +1406,34 @@ function JigsawPuzzle(config) {
         else {
             tile.positionMoved = false;
         }
-        tile.cellPosition = cellPosition;
-        tile.relativePosition = new Point(0, 0);
+        if(tile.originArea == 0 && tile.originCellPosition){
+            var x = tile.originCellPosition.x;
+            var y = tile.originCellPosition.y;
+            instance.candidateAreaArray[y*instance.tilesPerRow+x]=null;
+            tile.area = newArea;
+            tile.cellPosition = new Point(newx,newy);
+            if(newArea == 0)
+            {
+                instance.candidateAreaArray[newy*instance.tilesPerRow+newx]=tile;
+            }
+            else
+                instance.playerAreaArray[newy*instance.tilesPerRow+newx]=tile;
+        }
+        else if(tile.originArea == 1 && tile.originCellPosition){
+            var x = tile.originCellPosition.x;
+            var y = tile.originCellPosition.y;
+            instance.playerAreaArray[y*instance.tilesPerRow+x]=null;
+            tile.area = newArea;
+            tile.cellPosition = new Point(newx,newy);
+            if(newArea == 0)
+            {
+                instance.candidateAreaArray[newy*instance.tilesPerRow+newx]=tile;
+            }
+            else
+                instance.playerAreaArray[newy*instance.tilesPerRow+newx]=tile;
+        }
+        // tile.cellPosition = cellPosition;
+        // tile.relativePosition = new Point(0, 0);
     }
 
     this.undoNextStep = function () {
@@ -1546,52 +1614,74 @@ function JigsawPuzzle(config) {
 
     this.releaseTile = function () {
         if (instance.draging) {
-            var centerCellPosition = new Point(
-                Math.round(instance.selectedTile[0].position.x / instance.tileWidth),
-                Math.round(instance.selectedTile[0].position.y / instance.tileWidth));
+            // var centerCellPosition = new Point(
+            //     Math.round(instance.selectedTile[0].position.x / instance.tileWidth),
+            //     Math.round(instance.selectedTile[0].position.y / instance.tileWidth));
 
-            var originCenterCellPostion = instance.selectedTile[0].originPosition;
+            //var originCenterCellPostion = instance.selectedTile[0].originPosition;
 
             // console.log("releaseTile cellPosition : x : " + centerCellPosition.x + " y : " + centerCellPosition.y);
-            var hasConflicts = checkConflict(instance.selectedTile, centerCellPosition);
+            var hasConflicts = checkConflict(instance.selectedTile[0]);
+            console.log("hasConflicts",hasConflicts);
             var hasConflict = hasConflicts[0];
             for (var i = 0; i < instance.selectedTile.length; i++) {
                 instance.selectedTile[i].picking = false;
             }
 
             var tilesMoved = false;
-            for (var i = 0; i < instance.selectedTile.length; i++) {
-                var tile = instance.selectedTile[i];
-                var cellPosition = undefined;
-                if (hasConflict) {
-                    cellPosition = originCenterCellPostion + tile.relativePosition;
+            // for (var i = 0; i < instance.selectedTile.length; i++) {
+            //     var tile = instance.selectedTile[i];
+            //     var cellPosition = undefined;
+            //     if (hasConflict) {
+            //         cellPosition = originCenterCellPostion + tile.relativePosition;
+            //     }
+            //     else {
+            //         cellPosition = centerCellPosition + tile.relativePosition;
+            //     }
+            //     placeTile(tile, cellPosition);
+            //     tilesMoved = tilesMoved || tile.positionMoved;
+            //
+            //     if (tile.differentColor.length > 0) {
+            //         var tileIndex = getTileIndex(tile);
+            //         for (var j = 0; j < tile.differentColor.length; j++) {
+            //             showColorBorder(tileIndex, tile.differentColor[j], tile.colorDirection[j], false);
+            //         }
+            //     }
+            // }
+            if(hasConflict){
+                instance.selectedTile[0].position = instance.selectedTile[0].originPosition;
+            }
+            else{
+                if(hasConflicts[1]==0){
+                    var x = hasConflicts[2];
+                    var y = hasConflicts[3];
+                    var newPosition = instance.candidateAreaPosition + new Point((x+0.5)*instance.tileWidth,(y+0.5)*instance.tileWidth);
+                    placeTile(tile,newPosition,0,x,y);
+                    tilesMoved = tilesMoved || tile.positionMoved;
                 }
-                else {
-                    cellPosition = centerCellPosition + tile.relativePosition;
-                }
-                placeTile(tile, cellPosition);
-                tilesMoved = tilesMoved || tile.positionMoved;
-
-                if (tile.differentColor.length > 0) {
-                    var tileIndex = getTileIndex(tile);
-                    for (var j = 0; j < tile.differentColor.length; j++) {
-                        showColorBorder(tileIndex, tile.differentColor[j], tile.colorDirection[j], false);
-                    }
+                else if(hasConflicts[1]==1){
+                    var x = hasConflicts[2];
+                    var y = hasConflicts[3];
+                    var newPosition = instance.playerAreaPosition + new Point((x+0.5)*instance.tileWidth,(y+0.5)*instance.tileWidth);
+                    placeTile(tile,newPosition,1,x,y);
+                    tilesMoved = tilesMoved || tile.positionMoved;
                 }
             }
+            console.log("array0",instance.candidateAreaArray);
+            console.log("array1",instance.playerAreaArray);
 
-            for (var i = 0; i < instance.selectedTile.length; i++) {
-                refreshAroundTiles(instance.selectedTile[i], false);
-            }
+            // for (var i = 0; i < instance.selectedTile.length; i++) {
+            //     refreshAroundTiles(instance.selectedTile[i], false);
+            // }
 
-            for (var i = 0; i < instance.selectedTile.length; i++) {
-                var tile = instance.selectedTile[i];
-                if (tile.aroundTilesChanged) {
-                    computeSubGraph(tile);
-                }
-            }
-
-            computeGraphData();
+            // for (var i = 0; i < instance.selectedTile.length; i++) {
+            //     var tile = instance.selectedTile[i];
+            //     if (tile.aroundTilesChanged) {
+            //         computeSubGraph(tile);
+            //     }
+            // }
+            //
+            // computeGraphData();
 
             if (tilesMoved && !instance.gameFinished) {
                 instance.steps += 1;
@@ -1602,13 +1692,13 @@ function JigsawPuzzle(config) {
                 saveGame();
             }
 
-            if (!hasConflict && instance.showHints) {
-                var selectedTileIndexes = new Array();
-                for (var i = 0; i < instance.selectedTile.length; i++) {
-                    selectedTileIndexes.push(getTileIndex(instance.selectedTile[i]));
-                }
-                getHints(roundID, selectedTileIndexes);
-            }
+            // if (!hasConflict && instance.showHints) {
+            //     var selectedTileIndexes = new Array();
+            //     for (var i = 0; i < instance.selectedTile.length; i++) {
+            //         selectedTileIndexes.push(getTileIndex(instance.selectedTile[i]));
+            //     }
+            //     getHints(roundID, selectedTileIndexes);
+            // }
 
             for (var i = 0; i < instance.selectedTile.length; i++) {
                 instance.selectedTile[i].opacity = 1;
@@ -1625,7 +1715,7 @@ function JigsawPuzzle(config) {
                 }
             }
             $('html,body').css('cursor', 'default');
-            normalizeTiles();
+            // normalizeTiles();
         }
     }
 
@@ -2475,18 +2565,15 @@ function JigsawPuzzle(config) {
 
     this.dragTile = function (delta) {
         if (instance.draging) {
-            var centerPosition = instance.selectedTile[0].position;
             if (instance.selectedTile[0].differentColor.length > 0) {
                 hideColorBorder(getTileIndex(instance.selectedTile[0]));
             }
             else {
                 hideAllColorBorder();
             }
-            for (var i = 0; i < instance.selectedTile.length; i++) {
-                var tile = instance.selectedTile[i];
-                tile.opacity = 1;
-                tile.position = centerPosition + tile.relativePosition * instance.tileWidth + delta;
-            }
+            var tile = instance.selectedTile[0];
+            tile.opacity = 1;
+            tile.position = tile.position + delta;
         }
         else {
             var currentScroll = view.currentScroll - delta * instance.currentZoom;
@@ -2513,35 +2600,56 @@ function JigsawPuzzle(config) {
     }
 
     function findSelectTile(point) {
-        var caCellPosition = new Point(Math.round((point.x - instance.candidateAreaPosition.x)/instance.tileWidth),Math.round((point.y - instance.candidateAreaPosition.y)/instance.tileWidth));
-
-        var cellPosition = new Point(
-            Math.round(point.x / instance.tileWidth),//returns int closest to arg
-            Math.round(point.y / instance.tileWidth));
-        var hitResult = project.hitTest(point);
-        if (!hitResult || hitResult.type != "pixel") {
-            instance.selectedTile = null;
-            return;
-        }
-        var img = hitResult.item;
-        var tile = img.parent.parent;
-        // console.log(tile.name);
-        if (tile.picking) {
-            instance.selectedTile = null;
-            return;
-        }
-        if (tile && tile.name) {
+        console.log("point",point);
+        var xPosition = Math.floor((point.x - instance.candidateAreaPosition.x)/instance.tileWidth);
+        var yPosition = Math.floor((point.y - instance.candidateAreaPosition.y)/instance.tileWidth);
+        var xPosition2 = Math.floor((point.x - instance.playerAreaPosition.x)/instance.tileWidth);
+        var yPosition2 = Math.floor((point.y - instance.playerAreaPosition.y)/instance.tileWidth);
+        console.log("point:",point);
+        console.log("playerAreaPosition",instance.playerAreaPosition);
+        console.log("x,y2",xPosition2,yPosition2);
+        if(xPosition>=0 && xPosition<=instance.tilesPerRow && yPosition>=0 && yPosition<=instance.tilesPerColumn && instance.candidateAreaArray[yPosition*instance.tilesPerRow+xPosition]) {
+            console.log("hit candidate");
+            tile = instance.candidateAreaArray[yPosition * instance.tilesPerRow + xPosition];
             instance.selectedTile = new Array();
-            if (instance.dragMode == "tile-First") {
-                instance.selectedTile.push(tile);
-            }
-            else {
-                DFSTiles(tile, instance.selectedTile, new Point(0, 0));
-            }
+            instance.selectedTile.push(tile);
         }
-        else {
+        else if (xPosition2>=0 && xPosition2<=instance.tilesPerRow && yPosition2>=0 && yPosition2<=instance.tilesPerColumn && instance.playerAreaArray[yPosition2 * instance.tilesPerRow + xPosition2]) {
+            console.log("hit player");
+            tile = instance.playerAreaArray[yPosition2 * instance.tilesPerRow + xPosition2];
+            instance.selectedTile = new Array();
+            instance.selectedTile.push(tile);
+            }
+        else
             instance.selectedTile = null;
-        }
+        console.log("find select tile",instance.selectedTile);
+        // var cellPosition = new Point(
+        //     Math.round(point.x / instance.tileWidth),//returns int closest to arg
+        //     Math.round(point.y / instance.tileWidth));
+        // var hitResult = project.hitTest(point);
+        // if (!hitResult || hitResult.type != "pixel") {
+        //     instance.selectedTile = null;
+        //     return;
+        // }
+        // var img = hitResult.item;
+        // var tile = img.parent.parent;
+        // // console.log(tile.name);
+        // if (tile.picking) {
+        //     instance.selectedTile = null;
+        //     return;
+        // }
+        // if (tile && tile.name) {
+        //     instance.selectedTile = new Array();
+        //     if (instance.dragMode == "tile-First") {
+        //         instance.selectedTile.push(tile);
+        //     }
+        //     else {
+        //         DFSTiles(tile, instance.selectedTile, new Point(0, 0));
+        //     }
+        // }
+        // else {
+        //     instance.selectedTile = null;
+        // }
     }
 
     this.dragTileOrTiles = function () {
@@ -2758,7 +2866,7 @@ function JigsawPuzzle(config) {
 
     $('#apply-button').click(function (event) {
         var rating = $("#rating").val();
-        puzzle.calcHintedTile();
+        //puzzle.calcHintedTile();
 
         sendRecord(false, rating);
         quitRound(roundID);
