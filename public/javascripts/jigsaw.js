@@ -1802,11 +1802,23 @@ function JigsawPuzzle(config) {
             instance.selectedTile = null;
             instance.draging = false;
 
-            if (!instance.gameFinished) {
-                var errors = checkTiles();
-                if (errors == 0) {
+            // if (!instance.gameFinished) {
+            //     var errors = checkTiles();
+            //     if (errors == 0) {
+            //         finishGame();
+            //         clearTimeout(instance.askHelpTimeout);
+            //     }
+            // }
+            if(!instance.gameFinished){
+                var sum = 0;
+                for(var j=0; j<instance.tilesPerColumn; j++)
+                    for(var i=0; i<instance.tilesPerRow; i++)
+                    {
+                        if(instance.playerAreaArray[j*instance.tilesPerRow+i])
+                            sum++;
+                    }
+                if(sum == instance.tilesNum){
                     finishGame();
-                    clearTimeout(instance.askHelpTimeout);
                 }
             }
             $('html,body').css('cursor', 'default');
