@@ -1564,6 +1564,19 @@ function JigsawPuzzle(config) {
         // }
         //
         // instance.undoing = false;
+        instance.undoing = true;
+        for(var j=0; j<instance.tilesPerColumn; j++)
+            for(var i=0; i<instance.tilesPerRow; i++)
+            {
+                var tile = instance.tiles[j*instance.tilesPerRow+i];
+                var position = instance.candidateAreaPosition + new Point((i + 0.5) * instance.tileWidth, (j + 0.5) * instance.tileWidth);
+                tile.position = position;
+                tile.cellPosition = new Point(i, j);
+                tile.area = 0;
+                instance.candidateAreaArray[j*instance.tilesPerRow+i]=tile;
+                instance.playerAreaArray[j*instance.tilesPerRow+i] = null;
+            }
+        instance.undoing = false;
     }
 
     function generateLinksTags(x, y, direction, beHinted) {
@@ -2956,9 +2969,10 @@ function JigsawPuzzle(config) {
 }());
 
 $('#undo_button').on('click', function (event) {
-    if (puzzle.steps != undoStep) {
-        puzzle.undoNextStep();
-    }
+    // if (puzzle.steps != undoStep) {
+    //     puzzle.undoNextStep();
+    // }
+    puzzle.undoNextStep();
 });
 
 $('#undo_button').mousedown(function () {
