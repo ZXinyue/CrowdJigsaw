@@ -307,9 +307,9 @@ function JigsawPuzzle(config) {
     this.imgSize = this.originImage.size;
     this.imgWidth = this.imgSize.width;
     this.imgHeight = this.imgSize.height;
-    console.log("imgsize",this.imgSize);
+    //console.log("imgsize",this.imgSize);
     //this.imgWidth = imageWidth;
-    console.log("imgwidth,imgheight,tilesperrow,tilepercol,tilewidth",this.imgWidth,this.imgHeight,tilesPerRow,tilesPerColumn,tileWidth);
+    //console.log("imgwidth,imgheight,tilesperrow,tilepercol,tilewidth",this.imgWidth,this.imgHeight,tilesPerRow,tilesPerColumn,tileWidth);
     //this.imgHeight = imageHeight;
     this.tilesPerRow = tilesPerRow;
     this.tilesPerColumn = tilesPerColumn;
@@ -317,7 +317,7 @@ function JigsawPuzzle(config) {
     this.puzzleImage = this.originImage;
     //this.puzzleImage = new Raster(this.originImage);
     //this.puzzleImage.size *= Math.max((this.tileWidth / 2) / this.puzzleImage.size.width, (this.tileWidth / 2) / this.puzzleImage.size.height) + 1;
-    console.log("puzzleimagesize",this.puzzleImage.size);
+    //console.log("puzzleimagesize",this.puzzleImage.size);
     //this.puzzleImage.size = this.originImage.size;
     this.puzzleImage.position = view.center;
     this.originImage.visible = false;
@@ -812,13 +812,13 @@ function JigsawPuzzle(config) {
 
                 var offset = new Point(instance.tileWidth * x, instance.tileWidth * y);
                 //offset += new Point(instance.tileWidth / 4, instance.tileWidth / 4);
-                console.log("fuck",instance.puzzleImage.size);
+                //console.log("fuck",instance.puzzleImage.size);
                 var img = getTileRaster(
                     instance.puzzleImage,
                     new Size(instance.tileWidth, instance.tileWidth),
                     offset
                 );
-                console.log(img);
+                //console.log(img);
                 var border = mask.clone();
                 border.strokeColor = 'grey'; //grey
                 border.strokeWidth = (hasBorder == "true") ? 2 : 0;
@@ -1232,7 +1232,7 @@ function JigsawPuzzle(config) {
 
             var pos = new Point(instance.selectedTile[0].position.x, instance.selectedTile[0].position.y);
             var tile = instance.selectedTile[0];
-            console.log("pick tile",tile);
+            //console.log("pick tile",tile);
             tile.opacity = 0.5;
             tile.position = pos;
             tile.originPosition = tile.position;
@@ -1725,7 +1725,7 @@ function JigsawPuzzle(config) {
 
             // console.log("releaseTile cellPosition : x : " + centerCellPosition.x + " y : " + centerCellPosition.y);
             var hasConflicts = checkConflict(instance.selectedTile[0]);
-            console.log("hasConflicts",hasConflicts);
+            //console.log("hasConflicts",hasConflicts);
             var hasConflict = hasConflicts[0];
             for (var i = 0; i < instance.selectedTile.length; i++) {
                 instance.selectedTile[i].picking = false;
@@ -1770,8 +1770,8 @@ function JigsawPuzzle(config) {
                     tilesMoved = tilesMoved || tile.positionMoved;
                 }
             }
-            console.log("array0",instance.candidateAreaArray);
-            console.log("array1",instance.playerAreaArray);
+            // console.log("array0",instance.candidateAreaArray);
+            // console.log("array1",instance.playerAreaArray);
 
             // for (var i = 0; i < instance.selectedTile.length; i++) {
             //     refreshAroundTiles(instance.selectedTile[i], false);
@@ -1788,9 +1788,10 @@ function JigsawPuzzle(config) {
 
             if (tilesMoved && !instance.gameFinished) {
                 instance.steps += 1;
+                console.log("steps",instance.steps);
+                document.getElementById("steps").innerHTML = instance.steps;
                 instance.realStepsCounted = false;
-
-                document.getElementById("steps").innerHTML = instance.realSteps;
+                //document.getElementById("steps").innerHTML = instance.realSteps;
                 $('#undo_button').css('display', 'inline');
                 saveGame();
             }
