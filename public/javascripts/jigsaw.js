@@ -344,8 +344,8 @@ function JigsawPuzzle(config) {
     }
     else {
         //this.tileMarginWidth = this.tileWidth * ((100 / this.tileWidth - 1) / 2);
-        this.tileMarginWidth = this.tileWidth/5;
-        //this.tileMarginWidth = 0;
+        //this.tileMarginWidth = this.tileWidth/5;
+        this.tileMarginWidth = 0;
     }
     this.selectedTile = undefined;
     this.selectedGroup = undefined;
@@ -818,6 +818,7 @@ function JigsawPuzzle(config) {
                     new Size(instance.tileWidth, instance.tileWidth),
                     offset
                 );
+                console.log(img);
                 var border = mask.clone();
                 border.strokeColor = 'grey'; //grey
                 border.strokeWidth = (hasBorder == "true") ? 2 : 0;
@@ -1184,14 +1185,21 @@ function JigsawPuzzle(config) {
 
 
     function getTileRaster(sourceRaster, size, offset) {
-        var targetRaster = new Raster('empty');
+        //var targetRaster = new Raster('');
+        //console.log("targetRaster1",targetRaster);
         var tileWithMarginWidth = size.width + instance.tileMarginWidth * 2;
-        var imageData = sourceRaster.getImageData(new Rectangle(
+        // var imageData = sourceRaster.getImageData(new Rectangle(
+        //     offset.x - instance.tileMarginWidth,
+        //     offset.y - instance.tileMarginWidth,
+        //     tileWithMarginWidth,
+        //     tileWithMarginWidth));
+        // console.log("imageData",imageData);
+        var targetRaster = sourceRaster.getSubRaster(new Rectangle(
             offset.x - instance.tileMarginWidth,
             offset.y - instance.tileMarginWidth,
             tileWithMarginWidth,
             tileWithMarginWidth));
-        targetRaster.setImageData(imageData, new Point(0, 0));
+        //targetRaster.setImageData(imageData, new Point(0, 0));
         targetRaster.position = new Point(instance.tileWidth / 2, instance.tileWidth / 2);
         return targetRaster;
     }
