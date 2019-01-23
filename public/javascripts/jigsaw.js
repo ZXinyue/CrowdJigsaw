@@ -296,6 +296,15 @@ function JigsawPuzzle(config) {
             }
         }
     });
+
+    socket.on('addScore',function (data) {
+        console.log("front add");
+        instance.score += data.score;
+        document.getElementById("score").innerHTML = instance.score;
+    });
+    socket.on('already_exist',function (data) {
+        console.log("hhhhhhhhyoulaaaa");
+    });
     this.tileShape = config.tileShape;
     this.level = config.level;
 
@@ -379,6 +388,8 @@ function JigsawPuzzle(config) {
     this.steps = 0;
     this.realSteps = 0;
     this.realStepsCounted = false;
+
+    this.score = 0;
 
     this.gameStarted = false;
 
@@ -1588,6 +1599,75 @@ function JigsawPuzzle(config) {
         instance.undoing = false;
     }
 
+    this.checkSquare = function () {
+        var firsti = -1
+        var firstj = -1;
+        for(var j=0; j<instance.tilesPerColumn; j++) {
+            for (var i = 0; i < instance.tilesPerRow; i++) {
+                if (instance.playerAreaArray[j * instance.tilesPerRow + i]) {
+                    firsti = i;
+                    firstj = j;
+                    break;
+                }
+            }
+            if(firsti!=-1)
+            {
+                break;
+            }
+        }
+        var squareSize = 0;
+        for(var i = firsti; i<instance.tilesPerRow; i++)
+        {
+            if(instance.playerAreaArray[firstj*instance.tilesPerRow+i])
+            {
+                squareSize++;
+            }
+            else
+                break;
+        }
+        console.log("firsti:",firsti," firstj:",firstj," size:",squareSize);
+        if(squareSize<2)
+            return [false,null,null,null];
+
+        if(firstj+squareSize > instance.tilesPerColumn)
+            return [false,null,null,null];
+        var valid = true;
+        for(var j=0; j<instance.tilesPerColumn; j++)
+            for(var i=0; i<instance.tilesPerRow; i++)
+            {
+                var tile = instance.playerAreaArray[j*instance.tilesPerRow+i];
+                if(i>=firsti && i<firsti+squareSize && j>=firstj && j<firstj+squareSize)
+                {
+                    if(!tile)
+                        valid = false;
+                }
+                else
+                {
+                    if(tile)
+                        valid = false;
+                }
+            }
+        return [valid,firsti,firstj,squareSize];
+
+    }
+
+    this.uploadUserGraph = function(firsti, firstj, size)
+    {
+        tileIndexArray  = new Array();
+        for(var j = firstj; j< firstj+size ; j++)
+            for(var i = firsti; i<firsti+size; i++)
+            {
+                var index = instance.playerAreaArray[j*instance.tilesPerRow+i].findex;
+                tileIndexArray.push(index);
+            }
+        socket.emit('uploadUserGraph',{
+            round_id: roundID,
+            player_name: player_name,
+            tileIndexArray: tileIndexArray,
+            size: size
+        });
+
+    }
     function generateLinksTags(x, y, direction, beHinted) {
         switch (direction) {
             case 0:
@@ -3015,6 +3095,19 @@ $('#undo_button').mouseout(function () {
 
 $('.returnCenter').click(function () {
     puzzle.focusToCenter();
+});
+
+$('#check_button').on('click',function (event) {
+    var result = puzzle.checkSquare();
+    if(result[0]){
+        var firsti = result[1];
+        var firstj = result[2];
+        var size = result[3];
+        puzzle.uploadUserGraph(firsti,firstj,size);
+    }
+    else{
+        console.log("not valid",result);
+    }
 });
 
 /**

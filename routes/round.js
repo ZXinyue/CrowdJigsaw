@@ -4,6 +4,7 @@ var router = express.Router();
 var RoundModel = require('../models/round').Round;
 var UserModel = require('../models/user').User;
 var ActionModel = require('../models/action').Action;
+var UsergraphsModel = require('../models/usergraphs').Usergraphs;
 var util = require('./util.js');
 var images = require("images");
 var PythonShell = require('python-shell');
@@ -76,6 +77,22 @@ function isCreator(req, res, next) {
             }
         }
     });
+}
+function findArray(array, arrayList) {
+    for(var i=0; i<arrayList.length; i++){
+        var temp = arrayList[i];
+        var same = true;
+        for(var j=0;j<array.length;j++){
+            if(array[j]!=temp[j]){
+                same = false;
+                break;
+            }
+        }
+        if(same){
+            return same;
+        }
+    }
+    return false;
 }
 
 module.exports = function (io) {
@@ -364,6 +381,7 @@ module.exports = function (io) {
                         }
                         let TIME = util.getNowFormatDate();
                         // set start_time for all players
+                        console.log("players:",doc.players);
                         for (let p of doc.players) {
                             let operation = {
                                 $set: {
@@ -378,6 +396,24 @@ module.exports = function (io) {
                                     console.log(err);
                                 }
                             });
+                            var blankArray = new Array();
+                            let operation2 = {
+                                round_id : data.round_id,
+                                user_name : p.player_name,
+                                graph_s2: blankArray,
+                                graph_s3: blankArray,
+                                graph_s4: blankArray,
+                                graph_s5: blankArray,
+                            }
+                            UsergraphsModel.create(operation2, function (err, doc) {
+                                if(err){
+                                    console.log(err);
+                                }else{
+                                    console.log("usergraph init");
+                                }
+
+                            });
+
                         }
                         // set start time for round
                         let operation = {
@@ -575,7 +611,129 @@ module.exports = function (io) {
                 }
             });
         });
+
+    socket.on('uploadUserGraph',function(data){
+        let condition = {
+            round_id : data.round_id,
+            user_name : data.player_name,
+        };
+        console.log("userGraphssss",UsergraphsModel.find({}));
+        UsergraphsModel.findOne(condition, function (err, doc) {
+            if(err){
+                console.log(err);
+            }
+            else{
+                if(doc){
+                    let operation = {};
+                    var graphArray;
+                    if(data.size == 2){
+                        graphArray = doc.graph_s2;
+                        if(!findArray(data.tileIndexArray,graphArray)){
+                            graphArray.push(data.tileIndexArray);
+                            operation = {
+                                $set:{
+                                    "graph_s2" : graphArray,
+                                }
+                            };
+                            UsergraphsModel.update(condition,operation,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else{
+                                    console.log("add 10 la");
+                                    io.sockets.emit('addScore',{
+                                        score : 10,
+                                    });
+                                }
+                            });
+                        }
+                        else{
+                            io.sockets.emit('already_exist',{});
+                        }
+                    }
+                    if(data.size == 3){
+                        graphArray = doc.graph_s3;
+                        if(!findArray(data.tileIndexArray,graphArray)){
+                            graphArray.push(data.tileIndexArray);
+                            operation = {
+                                $set:{
+                                    "graph_s3" : graphArray,
+                                }
+                            };
+                            UsergraphsModel.update(condition,operation,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else{
+                                    socket.emit("addScore",{
+                                        score : 20,
+                                    })
+                                }
+                            });
+                        }
+                        else{
+                            socket.emit("already_exist",{});
+                        }
+                    }
+                    if(data.size == 4){
+                        graphArray = doc.graph_s4;
+                        if(!findArray(data.tileIndexArray,graphArray)){
+                            graphArray.push(data.tileIndexArray);
+                            operation = {
+                                $set:{
+                                    "graph_s4" : graphArray,
+                                }
+                            };
+                            UsergraphsModel.update(condition,operation,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else{
+                                    socket.emit("addScore",{
+                                        score : 40,
+                                    })
+                                }
+                            });
+                        }
+                        else{
+                            socket.emit("already_exist",{});
+                        }
+                    }
+                    if(data.size == 5){
+                        graphArray = doc.graph_s5;
+                        if(!findArray(data.tileIndexArray,graphArray)){
+                            graphArray.push(data.tileIndexArray);
+                            operation = {
+                                $set:{
+                                    "graph_s5" : graphArray,
+                                }
+                            };
+                            UsergraphsModel.update(condition,operation,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else{
+                                    socket.emit("addScore",{
+                                        score : 80,
+                                    })
+                                }
+                            });
+                        }
+                        else{
+                            socket.emit("already_exist",{});
+                        }
+                    }
+                }
+                else{
+                    console.log("not find the data from usergraph");
+                }
+            }
+
+        });
     });
+
+    }
+    );
 
     /**
      * Get all rounds
