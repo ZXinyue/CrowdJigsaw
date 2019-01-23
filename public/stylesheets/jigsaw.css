@@ -120,6 +120,47 @@ canvas[resize]{
     border-color: rgba(200, 200, 200, 0.5);
 }
 
+#check_button{
+    height: 10%;
+    width: height;
+    position:absolute;
+    top:20px;
+    right:100px;
+}
+
+#hint_button_2{
+    height: 10%;
+    width: height;
+    position:absolute;
+    top:20px;
+    right:500px;
+}
+
+#hint_button_3{
+    height: 10%;
+    width: height;
+    position:absolute;
+    top:20px;
+    right:400px;
+}
+
+#hint_button_4{
+    height: 10%;
+    width: height;
+    position:absolute;
+    top:20px;
+    right:300px;
+}
+
+#hint_button_5{
+    height: 10%;
+    width: height;
+    position:absolute;
+    top:20px;
+    right:200px;
+}
+
+
 .demo-layout-transparent .mdl-layout__drawer-button {
   color: black;
 }

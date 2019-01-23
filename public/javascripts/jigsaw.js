@@ -203,6 +203,7 @@ $(window).bind('mousewheel', function (e) {
 });
 
 function onKeyDown(event) {
+    console.log(event);
     if (event.event.ctrlKey && event.key == "z") {
         // undo a step
         if (puzzle.steps != undoStep) {
@@ -323,7 +324,7 @@ function JigsawPuzzle(config) {
     this.originImage.visible = false;
     this.puzzleImage.visible = false;
 
-    this.centerPositon = new Point(880, 410);
+    this.centerPositon = new Point(660, 330);
     this.candidateAreaPosition = this.centerPositon - new Point(this.tilesPerRow * this.tileWidth + 100, this.tilesPerColumn * this.tileWidth / 2);
     this.playerAreaPosition = this.centerPositon - new Point(-100, this.tilesPerColumn * this.tileWidth / 2);
     this.candidateAreaArray = new Array();
@@ -334,7 +335,7 @@ function JigsawPuzzle(config) {
     this.showHints = config.showHints;
 
     this.tilesNum = this.tilesPerRow * this.tilesPerColumn;
-    this.tileInformation = [[0,3,4,5],[7,9,8,0],[8,5,5,0],[0,5,0,1],
+    this.tileInformation = [[0,3,4,5],[7,9,8,0],[8,5,5,9],[0,5,0,1],
         [4,7,1,8],[1,1,8,3],[0,0,7,9],[8,1,0,3],
         [7,8,9,5],[9,0,9,8],[8,6,7,5],[1,9,9,7],
         [3,5,7,1],[9,3,8,0],[2,1,1,3],[1,3,2,0]];
