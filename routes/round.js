@@ -396,14 +396,13 @@ module.exports = function (io) {
                                     console.log(err);
                                 }
                             });
-                            var blankArray = new Array();
                             let operation2 = {
                                 round_id : data.round_id,
                                 user_name : p.player_name,
-                                graph_s2: blankArray,
-                                graph_s3: blankArray,
-                                graph_s4: blankArray,
-                                graph_s5: blankArray,
+                                graph_s2: new Array(),
+                                graph_s3: new Array(),
+                                graph_s4: new Array(),
+                                graph_s5: new Array(),
                             }
                             UsergraphsModel.create(operation2, function (err, doc) {
                                 if(err){
@@ -415,6 +414,22 @@ module.exports = function (io) {
                             });
 
                         }
+                        let op = {
+                            round_id : data.round_id,
+                            user_name : "allallall",
+                            graph_s2: new Array(),
+                            graph_s3: new Array(),
+                            graph_s4: new Array(),
+                            graph_s5: new Array(),
+                        }
+                        UsergraphsModel.create(op,function(err,doc){
+                            if(err){
+                                console.log(err);
+                            }
+                            else{
+                                console.log("allallall init");
+                            }
+                        });
                         // set start time for round
                         let operation = {
                             $set: {
@@ -617,7 +632,27 @@ module.exports = function (io) {
             round_id : data.round_id,
             user_name : data.player_name,
         };
-        console.log("userGraphssss",UsergraphsModel.find({}));
+        let allCondition = {
+            round_id : data.round_id,
+            user_name : "allallall",
+        };
+        var alls2 = new Array(),alls3 = new Array(),alls4 = new Array(),alls5 = new Array();
+        //var alls2,alls3,alls4,alls5;
+        UsergraphsModel.findOne(allCondition,function(err,doc){
+            if(err){
+                console.log(err);
+            }
+            else if(doc){
+                console.log("find allallall");
+                alls2 = doc.graph_s2;
+                console.log("dddddddd",doc.graph_s2);
+                alls3 = doc.graph_s3;
+                alls4 = doc.graph_s4;
+                alls5 = doc.graph_s5;
+            }
+        });
+        console.log("alls:",alls2);
+        //console.log("userGraphssss",UsergraphsModel.find({}));
         UsergraphsModel.findOne(condition, function (err, doc) {
             if(err){
                 console.log(err);
@@ -643,9 +678,27 @@ module.exports = function (io) {
                                     console.log("add 10 la");
                                     io.sockets.emit('addScore',{
                                         score : 10,
+                                        round_id : data.round_id,
+                                        player_name : data.player_name,
                                     });
                                 }
                             });
+                            if(!findArray(data.tileIndexArray,alls2)){
+                                alls2.push(data.tileIndexArray);
+                                operation = {
+                                    $set:{
+                                        "graph_s2" : alls2,
+                                    }
+                                };
+                                UsergraphsModel.update(allCondition,operation,function(err,doc){
+                                    if(err){
+                                        console.log(err);
+                                    }
+                                    else{
+                                        console.log(" new 2*2 add in all");
+                                    }
+                                });
+                            };
                         }
                         else{
                             io.sockets.emit('already_exist',{});
@@ -667,9 +720,27 @@ module.exports = function (io) {
                                 else{
                                     socket.emit("addScore",{
                                         score : 20,
+                                        round_id : data.round_id,
+                                        player_name : data.player_name,
                                     })
                                 }
                             });
+                            if(!findArray(data.tileIndexArray,alls3)){
+                                alls3.push(data.tileIndexArray);
+                                operation = {
+                                    $set:{
+                                        "graph_s3" : alls3,
+                                    }
+                                };
+                                UsergraphsModel.update(allCondition,operation,function(err,doc){
+                                    if(err){
+                                        console.log(err);
+                                    }
+                                    else{
+                                        console.log(" new 3*3 add in all");
+                                    }
+                                });
+                            };
                         }
                         else{
                             socket.emit("already_exist",{});
@@ -690,10 +761,28 @@ module.exports = function (io) {
                                 }
                                 else{
                                     socket.emit("addScore",{
+                                        round_id : data.round_id,
+                                        player_name : data.player_name,
                                         score : 40,
                                     })
                                 }
                             });
+                            if(!findArray(data.tileIndexArray,alls4)){
+                                alls4.push(data.tileIndexArray);
+                                operation = {
+                                    $set:{
+                                        "graph_s4" : alls4,
+                                    }
+                                };
+                                UsergraphsModel.update(allCondition,operation,function(err,doc){
+                                    if(err){
+                                        console.log(err);
+                                    }
+                                    else{
+                                        console.log(" new 4*4 add in all");
+                                    }
+                                });
+                            };
                         }
                         else{
                             socket.emit("already_exist",{});
@@ -714,10 +803,28 @@ module.exports = function (io) {
                                 }
                                 else{
                                     socket.emit("addScore",{
+                                        round_id : data.round_id,
+                                        player_name : data.player_name,
                                         score : 80,
                                     })
                                 }
                             });
+                            if(!findArray(data.tileIndexArray,alls5)){
+                                alls5.push(data.tileIndexArray);
+                                operation = {
+                                    $set:{
+                                        "graph_s5" : alls5
+                                    }
+                                };
+                                UsergraphsModel.update(allCondition,operation,function(err,doc){
+                                    if(err){
+                                        console.log(err);
+                                    }
+                                    else{
+                                        console.log(" new 5*5 add in all");
+                                    }
+                                });
+                            };
                         }
                         else{
                             socket.emit("already_exist",{});
@@ -731,6 +838,171 @@ module.exports = function (io) {
 
         });
     });
+
+    socket.on('getHint',function(data){
+        let condition = {
+            round_id : data.round_id,
+            user_name : 'allallall',
+        };
+        let condition2 = {
+            round_id : data.round_id,
+            user_name : data.player_name,
+        };
+        UsergraphsModel.findOne(condition,function(err,doc){
+            if(err){
+                console.log(err);
+            }
+            else{
+                if(doc){
+                    var returnArray = null;
+                    if(data.hintSize == 2){
+                        if(doc.graph_s2){
+                            var randomindex = Math.floor(Math.random() * doc.graph_s2.length);
+                            returnArray = doc.graph_s2[randomindex];
+                        }
+                        socket.emit("hintReturn",{
+                            returnArray: returnArray,
+                            returnSize: 2,
+                            round_id: data.round_id,
+                            player_name: data.player_name,
+                        });
+                        if(returnArray){
+                            UsergraphsModel.findOne(condition2,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else if(doc){
+                                    var graphArray = doc.graph_s2;
+                                    if(!findArray(returnArray,graphArray)){
+                                        graphArray.push(returnArray);
+                                        let operation = {
+                                            $set:{
+                                                "graph_s2" : graphArray,
+                                            }
+                                        };
+                                        UsergraphsModel.update(condition2,operation,function(err,doc){
+                                            if(err){
+                                                console.log(err);
+                                            }
+                                        });
+                                    }
+                                }
+                            })
+                        }
+                    }
+                    else if(data.hintSize == 3){
+                        if(doc.graph_s3){
+                            var randomindex = Math.floor(Math.random() * doc.graph_s3.length);
+                            returnArray = doc.graph_s3[randomindex];
+                        }
+                        socket.emit("hintReturn",{
+                            returnArray: returnArray,
+                            returnSize: 3,
+                            round_id: data.round_id,
+                            player_name: data.player_name,
+                        });
+                        if(returnArray){
+                            UsergraphsModel.findOne(condition2,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else if(doc){
+                                    var graphArray = doc.graph_s3;
+                                    if(!findArray(returnArray,graphArray)){
+                                        graphArray.push(returnArray);
+                                        let operation = {
+                                            $set:{
+                                                "graph_s3" : graphArray,
+                                            }
+                                        };
+                                        UsergraphsModel.update(condition2,operation,function(err,doc){
+                                            if(err){
+                                                console.log(err);
+                                            }
+                                        });
+                                    }
+                                }
+                            })
+                        }
+
+                    }
+                    else if(data.hintSize == 4){
+                        if(doc.graph_s4){
+                            var randomindex = Math.floor(Math.random() * doc.graph_s4.length);
+                            returnArray = doc.graph_s4[randomindex];
+                        }
+                        socket.emit("hintReturn",{
+                            returnArray: returnArray,
+                            returnSize: 4,
+                            round_id: data.round_id,
+                            player_name: data.player_name,
+                        });
+                        if(returnArray){
+                            UsergraphsModel.findOne(condition2,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else if(doc){
+                                    var graphArray = doc.graph_s4;
+                                    if(!findArray(returnArray,graphArray)){
+                                        graphArray.push(returnArray);
+                                        let operation = {
+                                            $set:{
+                                                "graph_s4" : graphArray,
+                                            }
+                                        };
+                                        UsergraphsModel.update(condition2,operation,function(err,doc){
+                                            if(err){
+                                                console.log(err);
+                                            }
+                                        });
+                                    }
+                                }
+                            })
+                        }
+                    }
+                    else if(data.hintSize ==5){
+                        if(doc.graph_s5){
+                            var randomindex = Math.floor(Math.random() * doc.graph_s5.length);
+                            returnArray = doc.graph_s5[randomindex];
+                        }
+                        socket.emit("hintReturn",{
+                            returnArray: returnArray,
+                            returnSize: 5,
+                            round_id: data.round_id,
+                            player_name: data.player_name,
+                        });
+                        if(returnArray){
+                            UsergraphsModel.findOne(condition2,function(err,doc){
+                                if(err){
+                                    console.log(err);
+                                }
+                                else if(doc){
+                                    var graphArray = doc.graph_s5;
+                                    if(!findArray(returnArray,graphArray)){
+                                        graphArray.push(returnArray);
+                                        let operation = {
+                                            $set:{
+                                                "graph_s5" : graphArray,
+                                            }
+                                        };
+                                        UsergraphsModel.update(condition2,operation,function(err,doc){
+                                            if(err){
+                                                console.log(err);
+                                            }
+                                        });
+                                    }
+                                }
+                            })
+                        }
+                    }
+                }
+            }
+        })
+
+
+
+    })
 
     }
     );

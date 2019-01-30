@@ -203,7 +203,6 @@ $(window).bind('mousewheel', function (e) {
 });
 
 function onKeyDown(event) {
-    console.log(event);
     if (event.event.ctrlKey && event.key == "z") {
         // undo a step
         if (puzzle.steps != undoStep) {
@@ -298,12 +297,39 @@ function JigsawPuzzle(config) {
     });
 
     socket.on('addScore',function (data) {
-        console.log("front add");
-        instance.score += data.score;
-        document.getElementById("score").innerHTML = instance.score;
+        if(data.round_id == roundID && data.player_name == player_name){
+            console.log("front add");
+            instance.score += data.score;
+            document.getElementById("score").innerHTML = instance.score;
+        }
     });
     socket.on('already_exist',function (data) {
         console.log("hhhhhhhhyoulaaaa");
+    });
+
+    socket.on('hintReturn',function (data) {
+        if(data.round_id == roundID && data.player_name == player_name){
+            if(!data.returnArray){return;}
+            for(var j=0; j<data.returnSize; j++)
+                for(var i=0; i<data.returnSize; i++)
+                {
+                    var index = data.returnArray[j*data.returnSize+i];
+                    var tile = instance.tiles[index];
+                    var position = instance.playerAreaPosition + new Point((i + 0.5) * instance.tileWidth, (j + 0.5) * instance.tileWidth);
+                    tile.position = position;
+                    tile.cellPosition = new Point(i, j);
+                    tile.area = 1;
+                    instance.playerAreaArray[j*instance.tilesPerRow+i]=tile;
+                }
+            for(var j=0; j<instance.tilesPerColumn; j++)
+                for(var i=0; i<instance.tilesPerRow; i++)
+                {
+                    var tile = instance.candidateAreaArray[j*instance.tilesPerRow+i];
+                    if(tile.area == 1){
+                        instance.candidateAreaArray[j*instance.tilesPerRow+i] = null;
+                    }
+                }
+        }
     });
     this.tileShape = config.tileShape;
     this.level = config.level;
@@ -1667,6 +1693,14 @@ function JigsawPuzzle(config) {
             size: size
         });
 
+    }
+
+    this.getHint = function (hintSize) {
+        socket.emit('getHint',{
+            round_id: roundID,
+            player_name: player_name,
+            hintSize: hintSize
+        });
     }
     function generateLinksTags(x, y, direction, beHinted) {
         switch (direction) {
@@ -3108,6 +3142,10 @@ $('#check_button').on('click',function (event) {
     else{
         console.log("not valid",result);
     }
+});
+
+$('#hint_button_2').on('click',function (event) {
+    puzzle.getHint(2);
 });
 
 /**
