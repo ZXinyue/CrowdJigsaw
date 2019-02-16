@@ -7,6 +7,7 @@ var UsergraphsSchema=new mongoose.Schema({
     graph_s3: {type: Array},
     graph_s4: {type: Array},
     graph_s5: {type: Array},
+    score: {type: Number},
 },
     { collection: 'usergraphs' });
 

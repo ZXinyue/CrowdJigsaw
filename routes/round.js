@@ -365,6 +365,30 @@ module.exports = function (io) {
             });
         });
 
+        socket.on('getScore',function(data) {
+            let condition = {
+                round_id: data.round_id,
+                user_name: data.player_name,
+            };
+            UsergraphsModel.findOne(condition, function (err, doc) {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    if (doc) {
+                        var score = doc.score;
+                        io.sockets.emit('addScore', {
+                            score: score,
+                            round_id: data.round_id,
+                            player_name: data.player_name,
+                        });
+
+                    }
+                }
+            });
+        });
+
+
         socket.on('startRound', function (data) {
             let condition = {
                 round_id: data.round_id,
@@ -403,6 +427,7 @@ module.exports = function (io) {
                                 graph_s3: new Array(),
                                 graph_s4: new Array(),
                                 graph_s5: new Array(),
+                                score: 0,
                             }
                             UsergraphsModel.create(operation2, function (err, doc) {
                                 if(err){
@@ -661,13 +686,17 @@ module.exports = function (io) {
                 if(doc){
                     let operation = {};
                     var graphArray;
+                    var score;
                     if(data.size == 2){
                         graphArray = doc.graph_s2;
+                        score = doc.score;
                         if(!findArray(data.tileIndexArray,graphArray)){
                             graphArray.push(data.tileIndexArray);
+                            score = score+10;
                             operation = {
                                 $set:{
                                     "graph_s2" : graphArray,
+                                    "score" : score,
                                 }
                             };
                             UsergraphsModel.update(condition,operation,function(err,doc){
@@ -677,7 +706,7 @@ module.exports = function (io) {
                                 else{
                                     console.log("add 10 la");
                                     io.sockets.emit('addScore',{
-                                        score : 10,
+                                        score : score,
                                         round_id : data.round_id,
                                         player_name : data.player_name,
                                     });
@@ -706,11 +735,14 @@ module.exports = function (io) {
                     }
                     if(data.size == 3){
                         graphArray = doc.graph_s3;
+                        score = doc.score;
                         if(!findArray(data.tileIndexArray,graphArray)){
                             graphArray.push(data.tileIndexArray);
+                            score = score+20;
                             operation = {
                                 $set:{
                                     "graph_s3" : graphArray,
+                                    "score" : score,
                                 }
                             };
                             UsergraphsModel.update(condition,operation,function(err,doc){
@@ -719,7 +751,7 @@ module.exports = function (io) {
                                 }
                                 else{
                                     socket.emit("addScore",{
-                                        score : 20,
+                                        score : score,
                                         round_id : data.round_id,
                                         player_name : data.player_name,
                                     })
@@ -748,11 +780,14 @@ module.exports = function (io) {
                     }
                     if(data.size == 4){
                         graphArray = doc.graph_s4;
+                        score = doc.score;
                         if(!findArray(data.tileIndexArray,graphArray)){
                             graphArray.push(data.tileIndexArray);
+                            score = score+40;
                             operation = {
                                 $set:{
                                     "graph_s4" : graphArray,
+                                    "score" : score,
                                 }
                             };
                             UsergraphsModel.update(condition,operation,function(err,doc){
@@ -763,7 +798,7 @@ module.exports = function (io) {
                                     socket.emit("addScore",{
                                         round_id : data.round_id,
                                         player_name : data.player_name,
-                                        score : 40,
+                                        score : score,
                                     })
                                 }
                             });
@@ -790,11 +825,14 @@ module.exports = function (io) {
                     }
                     if(data.size == 5){
                         graphArray = doc.graph_s5;
+                        score = doc.score;
                         if(!findArray(data.tileIndexArray,graphArray)){
                             graphArray.push(data.tileIndexArray);
+                            score = score+80;
                             operation = {
                                 $set:{
                                     "graph_s5" : graphArray,
+                                    "score" : score,
                                 }
                             };
                             UsergraphsModel.update(condition,operation,function(err,doc){
@@ -805,7 +843,7 @@ module.exports = function (io) {
                                     socket.emit("addScore",{
                                         round_id : data.round_id,
                                         player_name : data.player_name,
-                                        score : 80,
+                                        score : score,
                                     })
                                 }
                             });

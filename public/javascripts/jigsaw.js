@@ -129,6 +129,12 @@ function timedCount() {
 if (puzzle)
     timedCount();
 
+if (puzzle){
+    socket.emit('getScore',{
+        round_id: roundID,
+        player_name: player_name,
+    });
+}
 // $('#myselect').change(function () {
 //     if (puzzle) {
 //         if (this.value == "DragTileFirst") {
@@ -312,7 +318,7 @@ function JigsawPuzzle(config) {
     socket.on('addScore',function (data) {
         if(data.round_id == roundID && data.player_name == player_name){
             console.log("front add");
-            instance.score += data.score;
+            instance.score = data.score;
             document.getElementById("score").innerHTML = instance.score;
         }
     });
