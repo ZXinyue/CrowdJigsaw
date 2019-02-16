@@ -5,7 +5,7 @@ var socket = io.connect(requrl);
 var uploadDelayTime = 10;
 
 var undoStep = -1;
-$('#undo_button').css('display', 'none');
+//$('#undo_button').css('display', 'none');
 
 $(document).ready(function () {
     loadReady = true;
@@ -1629,7 +1629,7 @@ function JigsawPuzzle(config) {
         // }
         //
         // instance.undoing = false;
-        instance.undoing = true;
+        //instance.undoing = true;
         for(var j=0; j<instance.tilesPerColumn; j++)
             for(var i=0; i<instance.tilesPerRow; i++)
             {
@@ -1641,7 +1641,7 @@ function JigsawPuzzle(config) {
                 instance.candidateAreaArray[j*instance.tilesPerRow+i]=tile;
                 instance.playerAreaArray[j*instance.tilesPerRow+i] = null;
             }
-        instance.undoing = false;
+        //instance.undoing = false;
     }
 
     this.checkSquare = function () {
@@ -2015,7 +2015,7 @@ function JigsawPuzzle(config) {
                 document.getElementById("steps").innerHTML = instance.steps;
                 instance.realStepsCounted = false;
                 //document.getElementById("steps").innerHTML = instance.realSteps;
-                $('#undo_button').css('display', 'inline');
+                //$('#undo_button').css('display', 'inline');
                 saveGame();
             }
 
