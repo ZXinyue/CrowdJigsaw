@@ -389,10 +389,11 @@ function JigsawPuzzle(config) {
     this.showHints = config.showHints;
 
     this.tilesNum = this.tilesPerRow * this.tilesPerColumn;
-    this.tileInformation = [[0,3,4,5],[7,9,8,0],[8,5,5,9],[0,5,0,1],
-        [4,7,1,8],[1,1,8,3],[0,0,7,9],[8,1,0,3],
-        [7,8,9,5],[9,0,9,8],[8,6,7,5],[1,9,9,7],
-        [3,5,7,1],[9,3,8,0],[2,1,1,3],[1,3,2,0]];
+    // this.tileInformation = [[0,3,4,5],[7,9,8,0],[8,5,5,9],[0,5,0,1],
+    //     [4,7,1,8],[1,1,8,3],[0,0,7,9],[8,1,0,3],
+    //     [7,8,9,5],[9,0,9,8],[8,6,7,5],[1,9,9,7],
+    //     [3,5,7,1],[9,3,8,0],[2,1,1,3],[1,3,2,0]];
+    this.tileInformation = getTileInfo(imgSrc);
 
     if (this.tileShape == "voronoi") {
         this.tileMarginWidth = this.tileWidth * 0.5;
@@ -3156,6 +3157,22 @@ function JigsawPuzzle(config) {
 
     function loadGame() {
         socket.emit('loadGame', {username: player_name});
+    }
+
+    function getTileInfo(imgSrc) {
+        var id = imgSrc.substring(11).split('_')[0];
+        console.log('id:',id);
+        var result;
+        switch (id){
+            case '1':
+                result= [[0,3,4,5],[7,9,8,0],[8,5,5,9],[0,5,0,1],
+                    [4,7,1,8],[1,1,8,3],[0,0,7,9],[8,1,0,3],
+                    [7,8,9,5],[9,0,9,8],[8,6,7,5],[1,9,9,7],
+                    [3,5,7,1],[9,3,8,0],[2,1,1,3],[1,3,2,0]];
+                break;
+        }
+        return result;
+
     }
 }
 
