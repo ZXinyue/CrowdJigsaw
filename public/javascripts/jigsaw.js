@@ -3250,6 +3250,15 @@ $('#check_button').on('click',function (event) {
 $('#hint_button_2').on('click',function (event) {
     puzzle.getHint(2);
 });
+$('#hint_button_3').on('click',function (event) {
+    puzzle.getHint(3);
+});
+$('#hint_button_4').on('click',function (event) {
+    puzzle.getHint(4);
+});
+$('#hint_button_5').on('click',function (event) {
+    puzzle.getHint(5);
+});
 
 /**
  * Send personal records to the server at the end of one game
