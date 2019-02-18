@@ -217,8 +217,9 @@ function onKeyDown(event) {
     }
 }
 
-function onKeyUp(event) {
+function onKeyDown(event) {
     console.log(event.key);
+    event.preventDefault();
     switch (event.key) {
         case 'z':
             puzzle.zoom(.1);
