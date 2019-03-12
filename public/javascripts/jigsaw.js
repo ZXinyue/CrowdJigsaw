@@ -276,13 +276,13 @@ function JigsawPuzzle(config) {
     this.forceLeaving = false;
     this.forceLeave = function (text) {
         instance.forceLeaving = true;
-        $('#cancel-button').attr('disabled', "true");
-
-        $('#quitLabel').text(text);
-        $('#ensure_quit_dialog').modal({
-            keyboard: false,
-            backdrop: false
-        });
+        // $('#cancel-button').attr('disabled', "true");
+        //
+        // $('#quitLabel').text(text);
+        // $('#ensure_quit_dialog').modal({
+        //     keyboard: false,
+        //     backdrop: false
+        // });
     }
     ////
     socket.on('forceLeave', function (data) {
@@ -310,7 +310,7 @@ function JigsawPuzzle(config) {
                     window.location = '/home';
                 }
                 else {
-                    window.location = '/award/' + roundID;
+                    window.location = '/roundrank/' + roundID;
                 }
             }
         }
@@ -749,18 +749,16 @@ function JigsawPuzzle(config) {
          * Once one person solves the puzzle, the round is over
          * Send a msg to the server and the server broadcast it to all players
          **/
-        steps = Number(document.getElementById("steps").innerHTML);
+        var steps = Number(document.getElementById("steps").innerHTML);
+        var score = instance.score;
+        console.log("finish steps and score",steps,score);
 
         socket.emit('iSolved', {
             round_id: roundID,
             player_name: player_name,
             steps: steps,
             startTime: startTime,
-            totalLinks: hintedLinksNum.totalLinks,
-            hintedLinks: hintedLinksNum.hintedLinks,
-            correctLinks: hintedLinksNum.correctLinks,
-            totalHintsNum: totalHintsNum,
-            correctHintsNum: correctHintsNum
+            score: score,
         });
     }
 
@@ -3307,20 +3305,15 @@ $('#hint_button_5').on('click',function (event) {
  * Send personal records to the server at the end of one game
  */
 function sendRecord(finished, rating) {
-    // var params = {
-    //     round_id: roundID,
-    //     player_name: player_name,
-    //     finished: finished,
-    //     steps: puzzle.realSteps,
-    //     startTime: startTime,
-    //     totalLinks: hintedLinksNum.totalLinks,
-    //     hintedLinks: hintedLinksNum.hintedLinks,
-    //     correctLinks: hintedLinksNum.correctLinks,
-    //     totalHintsNum: totalHintsNum,
-    //     correctHintsNum: correctHintsNum,
-    //     rating: rating
-    // };
-    // socket.emit('saveRecord', params);
+    var params = {
+        round_id: roundID,
+        player_name: player_name,
+        finished: finished,
+        steps: puzzle.realSteps,
+        startTime: startTime,
+        rating: rating
+    };
+    socket.emit('saveRecord', params);
 }
 
 function quitRound(roundID) {
@@ -3341,9 +3334,9 @@ function quitRound(roundID) {
     }
 }
 
-if(solved_players >= 1){
-    puzzle.forceLeave('Someone Have Finished the Puzzle. Please Quit.');
-}
+// if(solved_players >= 1){
+//     puzzle.forceLeave('Someone Have Finished the Puzzle. Please Quit.');
+// }
 
 
 $(document).ready(function(e) { 

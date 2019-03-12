@@ -7,6 +7,7 @@ var UserModel = require('../models/user').User;
 var RoundModel = require('../models/round').Round;
 var crypto = require('crypto');
 var util = require('./util.js');
+var UsergraphsModel = require('../models/usergraphs').Usergraphs;
 
 const redis = require('redis').createClient();
 
@@ -435,95 +436,49 @@ router.route('/settings').all(LoginFirst).get(function (req, res) {
 
 // Get the rank of this round
 router.route('/roundrank/:round_id').all(LoginFirst).get(function (req, res) {
-    let condition = {
-        "records.round_id": req.params.round_id
-    };
-    let fields = {
-        _id: 0,
-        username: 1,
-        avatar: 1,
-        records: 1
-    };
-    RoundModel.findOne({
-        round_id: req.params.round_id
-    }, function (err, doc) {
-        if (err) {
+    let condition = {"round_id":req.params.round_id};
+    UsergraphsModel.find(condition,function(err,docs){
+        if(err){
             console.log(err);
-        } else {
-            if (doc) {
-                var round = doc;
-                var roundContribution = round.contribution;
-                var puzzle_links = 2 * round.tilesPerColumn * round.tilesPerRow - round.tilesPerColumn - round.tilesPerRow;
-                UserModel.find(condition, fields, function (err, docs) {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        if (docs) {
-                            let finished = new Array();
-                            let unfinished = new Array();
-                            for (let d of docs) {
-                                for (let r of d.records) {
-                                    if (r.round_id == req.params.round_id && r.start_time != "-1") {
-                                        let hintPercent = 0;
-                                        let correctPercent = 0;
-                                        let finishPercent = 0;
-                                        if (r.hinted_links != -1 && r.total_links != -1 && r.total_links > 0 && r.hinted_links > 0) {
-                                            hintPercent = r.hinted_links / r.total_links * 100;
-                                        }
-                                        if (r.total_hints > 0 && r.correct_hints != -1 && hintPercent > 0) {
-                                            correctPercent = r.correct_hints / r.total_hints * 100;
-                                        }
-                                        if (r.total_links > 0 && r.correct_links != -1) {
-                                            finishPercent = (r.correct_links / 2) / puzzle_links * 100;
-                                        }
-                                        let contribution = 0;
-                                        if (roundContribution && roundContribution[d.username]) {
-                                            contribution = roundContribution[d.username] * 100;
-                                        }
-                                        if (r.end_time != "-1") {
-                                            finished.push({
-                                                "playername": d.username,
-                                                "avatar": d.avatar,
-                                                "time": r.time,
-                                                "steps": r.steps,
-                                                "contribution": contribution.toFixed(3),
-                                                "hintPercent": hintPercent.toFixed(3),
-                                                "finishPercent": finishPercent.toFixed(3),
-                                                "correctPercent": correctPercent.toFixed(3),
-                                                "rating": r.rating
-                                            });
-                                        } else {
-                                            unfinished.push({
-                                                "playername": d.username,
-                                                "avatar": d.avatar,
-                                                "time": r.time,
-                                                "steps": r.steps,
-                                                "contribution": contribution.toFixed(3),
-                                                "hintPercent": hintPercent.toFixed(3),
-                                                "finishPercent": finishPercent.toFixed(3),
-                                                "correctPercent": correctPercent.toFixed(3),
-                                                "rating": r.rating
-                                            });
-                                        }
-                                    }
-                                }
-                            }
-                            // sort the players
-                            finished = finished.sort(util.ascending("time"));
-                            unfinished = unfinished.sort(util.descending("contribution"));
-                            res.render('roundrank', {
-                                title: 'Round Rank',
-                                Finished: finished,
-                                Unfinished: unfinished,
-                                username: req.session.user.username,
-                                round_id: req.params.round_id
-                            });
-                        }
+        }
+        else{
+            if(docs){
+                let finished = new Array();
+                let unfinished = new Array();
+                for(let i=0;i<docs.length;i++){
+                    let t = docs[i];
+                    if(t.end_time != "-1"){
+                        finished.push({
+                            "rank":i+1,
+                            "playername":t.user_name,
+                            "score":t.score,
+                            "steps":t.steps,
+                            "time":t.time,
+                        })
                     }
+                    else if(t.user_name != "allallall"){
+                        unfinished.push({
+                            "rank":i+1,
+                            "playername":t.user_name,
+                            "score":t.score,
+                            "steps":t.steps,
+                            "time":t.time,
+                        })
+                    }
+
+                }
+                finished = finished.sort(util.ascending("time"));
+                unfinished = unfinished.sort(util.descending("score"));
+                res.render('roundrank', {
+                    title: 'Round Rank',
+                    Finished: finished,
+                    Unfinished: unfinished,
+                    username: req.session.user.username,
+                    round_id: req.params.round_id
                 });
             }
         }
-    });
+    })
 });
 
 // Rank

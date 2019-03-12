@@ -8,6 +8,9 @@ var UsergraphsSchema=new mongoose.Schema({
     graph_s4: {type: Array},
     graph_s5: {type: Array},
     score: {type: Number},
+    end_time: {type: String, default:"-1"},
+    steps: { type: Number, default: -1 },
+    time: { type: String, default: "-1" },
 },
     { collection: 'usergraphs' });
 

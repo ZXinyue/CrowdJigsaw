@@ -231,10 +231,6 @@ module.exports = function (io) {
                     "solved_players": 1,
                     "winner_time": finish_time,
                     "winner_steps": data.steps,
-                    "total_links": data.totalLinks,
-                    "hinted_links": data.hintedLinks,
-                    "total_hints": data.totalHintsNum,
-                    "correct_hints": data.correctHintsNum
                 }
             };
             RoundModel.findOne({
@@ -245,7 +241,6 @@ module.exports = function (io) {
                         console.log(err);
                     } else {
                         if (doc) {
-                            doc.solved_players = 1;
                             var redis_key = 'round:' + data.round_id;
                             redis.set(redis_key, JSON.stringify(doc));
                             if (doc.solved_players == 0) {
@@ -257,9 +252,9 @@ module.exports = function (io) {
                                         console.log(err);
                                     }
                                     else{
-                                        socket.broadcast.emit('forceLeave', {
-                                            round_id: data.round_id
-                                        });
+                                        // socket.broadcast.emit('forceLeave', {
+                                        //     round_id: data.round_id
+                                        // });
                                     }
                                 });
                             } else {
@@ -272,48 +267,37 @@ module.exports = function (io) {
                                     if (err) {
                                         console.log(err);
                                     } else {
-                                        socket.broadcast.emit('forceLeave', {
-                                            round_id: data.round_id
-                                        });
+                                        // socket.broadcast.emit('forceLeave', {
+                                        //     round_id: data.round_id
+                                        // });
                                     }
                                 });
                             }
 
-                            let contri = 0;
-                            if (doc.contribution && doc.contribution.hasOwnProperty(data.player_name)) {
-                                contri = doc.contribution[data.player_name];
-                            }
+
                             let TIME = util.getNowFormatDate();
                             operation = {
                                 $set: {
-                                    "records.$.end_time": TIME,
-                                    "records.$.steps": data.steps,
-                                    "records.$.time": finish_time,
-                                    "records.$.contribution": contri.toFixed(3),
-                                    "records.$.total_links": data.totalLinks,
-                                    "records.$.hinted_links": data.hintedLinks,
-                                    "records.$.correct_links": data.correctLinks,
-                                    "records.$.total_hints": data.totalHintsNum,
-                                    "records.$.correct_hints": data.correctHintsNum
+                                    "end_time": TIME,
+                                    "steps": data.steps,
+                                    "time": finish_time,
+                                    "score": data.score,
                                 }
                             };
 
                             let finishTime = Math.floor(((new Date()).getTime() - data.startTime) / 1000);
-                            let puzzle_links = 2 * doc.tilesPerColumn * doc.tilesPerRow - doc.tilesPerColumn - doc.tilesPerRow;
-                            let finishPercent = (data.correctLinks / 2) / puzzle_links * 100;
-                            let score = parseFloat(finishPercent.toFixed(3));
-                            score += parseFloat(3600 / finishTime);
+
 
                             let condition = {
-                                username: data.player_name,
-                                "records.round_id": data.round_id
+                                user_name: data.player_name,
+                                round_id: data.round_id
                             };
 
-                            UserModel.update(condition, operation, function (err, doc) {
+                            UsergraphsModel.update(condition, operation, function (err, doc) {
                                 if (err) {
                                     console.log(err);
                                 } else {
-                                    console.log(data.player_name + ' saves his record: ' + contri.toFixed(3));
+                                    console.log(data.player_name + ' saves his record');
                                 }
                             });
 
@@ -595,62 +579,39 @@ module.exports = function (io) {
 
         socket.on('saveRecord', function (data) {
             let operation = {};
-            let contri = 0;
             let rating = data.rating;
-            RoundModel.findOne({
-                round_id: data.round_id
-            }, function (err, doc) {
+            let condition = {
+                "user_name": data.player_name,
+                "round_id": data.round_id
+            };
+
+            if (data.finished) {
+                operation = {
+                    $set: {
+                        "rating": rating
+                    }
+                };
+            } else {
+                condition["end_time"] = "-1";
+                operation = {
+                    $set: {
+                        "steps": data.steps,
+                        "time": getRoundFinishTime(data.startTime),
+                        "score": data.score,
+                        "rating": rating,
+                    }
+                };
+            }
+
+            UsergraphsModel.update(condition, operation, function (err, doc) {
                 if (err) {
                     console.log(err);
                 } else {
-                    if (doc) {
-                        if (doc.contribution && doc.contribution.hasOwnProperty(data.player_name)) {
-                            contri = doc.contribution[data.player_name];
-                        }
-                        if (data.finished) {
-                            let TIME = util.getNowFormatDate();
-                            operation = {
-                                $set: {
-                                    "records.$.rating": rating
-                                }
-                            };
-                        } else {
-                            operation = {
-                                $set: {
-                                    "records.$.end_time": "-1",
-                                    "records.$.steps": data.steps,
-                                    "records.$.time": getRoundFinishTime(data.startTime),
-                                    "records.$.contribution": contri.toFixed(3),
-                                    "records.$.total_links": data.totalLinks,
-                                    "records.$.hinted_links": data.hintedLinks,
-                                    "records.$.correct_links": data.correctLinks,
-                                    "records.$.total_hints": data.totalHintsNum,
-                                    "records.$.correct_hints": data.correctHintsNum,
-                                    "records.$.rating": rating
-                                }
-                            };
-
-                            let puzzle_links = 2 * doc.tilesPerColumn * doc.tilesPerRow - doc.tilesPerColumn - doc.tilesPerRow;
-                            let finishPercent = (data.correctLinks / 2) / puzzle_links * 100;
-                            let score = parseFloat(finishPercent.toFixed(3));
-                        }
-
-                        let condition = {
-                            username: data.player_name,
-                            "records.round_id": data.round_id
-                        };
-
-                        UserModel.update(condition, operation, function (err, doc) {
-                            if (err) {
-                                console.log(err);
-                            } else {
-                                console.log(data.player_name + ' saves his record: ' + contri.toFixed(3));
-                            }
-                        });
-                    }
+                    console.log(data.player_name + ' saves his record: ');
                 }
             });
         });
+
 
     socket.on('uploadUserGraph',function(data){
         let condition = {
@@ -1080,35 +1041,78 @@ module.exports = function (io) {
      * Get the round contribution rank
      */
     router.route('/getRoundRank/:round_id').all(LoginFirst).get(function (req, res, next) {
-        RoundModel.findOne({
-            round_id: req.params.round_id
-        }, {
-            _id: 0,
-            players: 1
-        }, {}, function (err, doc) {
-            if (err) {
+        // RoundModel.findOne({
+        //     round_id: req.params.round_id
+        // }, {
+        //     _id: 0,
+        //     players: 1
+        // }, {}, function (err, doc) {
+        //     if (err) {
+        //         console.log(err);
+        //     } else {
+        //         if (doc) {
+        //             let rankedPlayers = new Array();
+        //             let temp = doc.players;
+        //             temp = temp.sort(util.descending("contribution"));
+        //             for (let i = 0; i < temp.length; i++) {
+        //                 let t = temp[i];
+        //                 rankedPlayers.push({
+        //                     "rank": i + 1,
+        //                     "player_name": t.player_name,
+        //                     "contribution": t.contribution.toFixed(3)
+        //                     //Math.round(t.contribution*1000)/1000
+        //                 });
+        //             }
+        //             // res.render('roundrank', { title: 'Round Rank', AllPlayers: JSON.stringify(rankedPlayers), username: req.session.user.username });
+        //             res.send({
+        //                 AllPlayers: rankedPlayers
+        //             });
+        //         }
+        //     }
+        // });
+        let condition = {"round_id":round_id};
+        UsergraphsModel.find(condition,function(err,docs){
+            if(err){
                 console.log(err);
-            } else {
-                if (doc) {
-                    let rankedPlayers = new Array();
-                    let temp = doc.players;
-                    temp = temp.sort(util.descending("contribution"));
-                    for (let i = 0; i < temp.length; i++) {
-                        let t = temp[i];
-                        rankedPlayers.push({
-                            "rank": i + 1,
-                            "player_name": t.player_name,
-                            "contribution": t.contribution.toFixed(3)
-                            //Math.round(t.contribution*1000)/1000
-                        });
+            }
+            else{
+                if(doc){
+                    let finished = new Array();
+                    let unfinished = new Array();
+                    for(let i=0;i<docs.length;i++){
+                        let t = docs[i];
+                        if(t.end_time != "-1"){
+                            finished.push({
+                                "rank":i+1,
+                                "playername":t.user_name,
+                                "score":t.score,
+                                "steps":t.steps,
+                                "time":t.time,
+                            })
+                        }
+                        else{
+                            unfinished.push({
+                                "rank":i+1,
+                                "playername":t.user_name,
+                                "score":t.score,
+                                "steps":t.steps,
+                                "time":t.time,
+                            })
+                        }
+
                     }
-                    // res.render('roundrank', { title: 'Round Rank', AllPlayers: JSON.stringify(rankedPlayers), username: req.session.user.username });
-                    res.send({
-                        AllPlayers: rankedPlayers
+                    finished = finished.sort(util.ascending("time"));
+                    unfinished = unfinished.sort(util.descending("score"));
+                    res.render('roundrank', {
+                        title: 'Round Rank',
+                        Finished: finished,
+                        Unfinished: unfinished,
+                        username: req.session.user.username,
+                        round_id: req.params.round_id
                     });
                 }
             }
-        });
+        })
     });
 
     /**

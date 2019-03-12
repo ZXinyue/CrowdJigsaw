@@ -32,10 +32,11 @@
                         <th data-field="time" data-halign="center" data-align="center" data-sortable="true">Time Cost</th>
                         <th data-field="steps" data-halign="center" data-align="center" data-sortable="true">Steps</th>
                         <!-- <th data-field="contribution" data-halign="center" data-align="center" data-sortable="true">Contribution</th> -->
-                        <th data-field="finish_percent" data-halign="center" data-align="center" data-sortable="true">Finish Percent</th>
-                        <th data-field="hint_percent" data-halign="center" data-align="center" data-sortable="true">Hint Ratio</th>
-                        <th data-field="correct_hint_percent" data-halign="center" data-align="center" data-sortable="true">Hint Precision</th>
-                        <th data-field="rating" data-halign="center" data-align="center">Rating</th>
+                        <!--<th data-field="finish_percent" data-halign="center" data-align="center" data-sortable="true">Finish Percent</th>-->
+                        <!--<th data-field="hint_percent" data-halign="center" data-align="center" data-sortable="true">Hint Ratio</th>-->
+                        <!--<th data-field="correct_hint_percent" data-halign="center" data-align="center" data-sortable="true">Hint Precision</th>-->
+                        <!--<th data-field="rating" data-halign="center" data-align="center">Rating</th>-->
+                        <th data-field="score" data-halign="center" data-align="center" data-sortable="true">Score</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,51 +113,17 @@
                                     <td>
                                         <% if(u.playername===user.username){%>
                                             <span style="color:#3c3;">
-                                                <%- u.finishPercent %>%
+                                                <%- u.score %>
                                             </span>
                                             <%}
                                                     else{%>
                                                 <span>
-                                                    <%- u.finishPercent %>%
+                                                    <%- u.score %>
                                                 </span>
                                                 <%} %>
                                     </td>
-                                    <td>
-                                        <% if(u.playername===user.username){%>
-                                            <span style="color:#3c3;">
-                                                <%- u.hintPercent %>%
-                                            </span>
-                                            <%}
-                                                    else{%>
-                                                <span>
-                                                    <%- u.hintPercent %>%
-                                                </span>
-                                                <%} %>
-                                    </td>
-                                    <td>
-                                        <% if(u.playername===user.username){%>
-                                            <span style="color:#3c3;">
-                                                <%- u.correctPercent %>%
-                                            </span>
-                                            <%}
-                                                    else{%>
-                                                <span>
-                                                    <%- u.correctPercent %>%
-                                                </span>
-                                                <%} %>
-                                    </td>
-                                    <td>
-                                        <% if(u.playername===user.username){%>
-                                            <span style="color:#3c3;">
-                                                <%- u.rating %>
-                                            </span>
-                                            <%}
-                                                    else{%>
-                                                <span>
-                                                    <%- u.rating %>
-                                                </span>
-                                                <%} %>
-                                    </td>
+
+
                             </tr>
                             <% }) %>
                                 <% Unfinished.forEach(function(u){ %>
@@ -231,51 +198,16 @@
                                             <td>
                                                 <% if(u.playername===user.username){%>
                                                     <span style="color:#3c3;">
-                                                        <%- u.finishPercent %>%
+                                                        <%- u.score %>
                                                     </span>
                                                     <%}
                                                             else{%>
                                                         <span>
-                                                            <%- u.finishPercent %>%
+                                                            <%- u.score %>
                                                         </span>
                                                         <%} %>
                                             </td>
-                                            <td>
-                                                <% if(u.playername===user.username){%>
-                                                    <span style="color:#3c3;">
-                                                        <%- u.hintPercent %>%
-                                                    </span>
-                                                    <%}
-                                                            else{%>
-                                                        <span>
-                                                            <%- u.hintPercent %>%
-                                                        </span>
-                                                        <%} %>
-                                            </td>
-                                            <td>
-                                                <% if(u.playername===user.username){%>
-                                                    <span style="color:#3c3;">
-                                                        <%- u.correctPercent %>%
-                                                    </span>
-                                                    <%}
-                                                            else{%>
-                                                        <span>
-                                                            <%- u.correctPercent %>%
-                                                        </span>
-                                                        <%} %>
-                                            </td>
-                                            <td>
-                                                <% if(u.playername===user.username){%>
-                                                    <span style="color:#3c3;">
-                                                        <%- u.rating %>
-                                                    </span>
-                                                    <%}
-                                                            else{%>
-                                                        <span>
-                                                            <%- u.rating %>
-                                                        </span>
-                                                        <%} %>
-                                            </td>
+
                                     </tr>
                                     <% }) %>
                 </tbody>
