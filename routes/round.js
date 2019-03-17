@@ -720,9 +720,22 @@ module.exports = function (io) {
                             });
                             if(!findArray(data.tileIndexArray,alls3)){
                                 alls3.push(data.tileIndexArray);
+
+                                for(var i=0;i<2;i++)
+                                    for(var j=0;j<2;j++){
+                                        var tempArray = new Array();
+                                        for(var s=i; s<i+2 ;s++)
+                                            for(var t=j; t<j+2; t++){
+                                                tempArray.push(data.tileIndexArray[s*3+t]);
+                                            }
+                                        if(!findArray(tempArray,alls2)){
+                                            alls2.push(tempArray);
+                                        }
+                                    }
                                 operation = {
                                     $set:{
                                         "graph_s3" : alls3,
+                                        "graph_s2" : alls2,
                                     }
                                 };
                                 UsergraphsModel.update(allCondition,operation,function(err,doc){
@@ -734,6 +747,8 @@ module.exports = function (io) {
                                     }
                                 });
                             };
+
+
                         }
                         else{
                             socket.emit("already_exist",{});
@@ -765,9 +780,33 @@ module.exports = function (io) {
                             });
                             if(!findArray(data.tileIndexArray,alls4)){
                                 alls4.push(data.tileIndexArray);
+                                for(var i=0;i<3;i++)
+                                    for(var j=0;j<3;j++){
+                                        var tempArray = new Array();
+                                        for(var s=i; s<i+2 ;s++)
+                                            for(var t=j; t<j+2; t++){
+                                                tempArray.push(data.tileIndexArray[s*4+t]);
+                                            }
+                                        if(!findArray(tempArray,alls2)){
+                                            alls2.push(tempArray);
+                                        }
+                                    }
+                                for(var i=0;i<2;i++)
+                                    for(var j=0;j<2;j++){
+                                        var tempArray = new Array();
+                                        for(var s=i; s<i+3 ;s++)
+                                            for(var t=j; t<j+3; t++){
+                                                tempArray.push(data.tileIndexArray[s*4+t]);
+                                            }
+                                        if(!findArray(tempArray,alls3)){
+                                            alls3.push(tempArray);
+                                        }
+                                    }
                                 operation = {
                                     $set:{
                                         "graph_s4" : alls4,
+                                        "graph_s3" : alls3,
+                                        "graph_s2" : alls2,
                                     }
                                 };
                                 UsergraphsModel.update(allCondition,operation,function(err,doc){
@@ -810,9 +849,45 @@ module.exports = function (io) {
                             });
                             if(!findArray(data.tileIndexArray,alls5)){
                                 alls5.push(data.tileIndexArray);
+                                for(var i=0;i<4;i++)
+                                    for(var j=0;j<4;j++){
+                                        var tempArray = new Array();
+                                        for(var s=i; s<i+2 ;s++)
+                                            for(var t=j; t<j+2; t++){
+                                                tempArray.push(data.tileIndexArray[s*5+t]);
+                                            }
+                                        if(!findArray(tempArray,alls2)){
+                                            alls2.push(tempArray);
+                                        }
+                                    }
+                                for(var i=0;i<3;i++)
+                                    for(var j=0;j<3;j++){
+                                        var tempArray = new Array();
+                                        for(var s=i; s<i+3 ;s++)
+                                            for(var t=j; t<j+3; t++){
+                                                tempArray.push(data.tileIndexArray[s*5+t]);
+                                            }
+                                        if(!findArray(tempArray,alls3)){
+                                            alls3.push(tempArray);
+                                        }
+                                    }
+                                for(var i=0;i<2;i++)
+                                    for(var j=0;j<2;j++){
+                                        var tempArray = new Array();
+                                        for(var s=i; s<i+4 ;s++)
+                                            for(var t=j; t<j+4; t++){
+                                                tempArray.push(data.tileIndexArray[s*5+t]);
+                                            }
+                                        if(!findArray(tempArray,alls4)){
+                                            alls4.push(tempArray);
+                                        }
+                                    }
                                 operation = {
                                     $set:{
-                                        "graph_s5" : alls5
+                                        "graph_s5" : alls5,
+                                        "graph_s4" : alls4,
+                                        "graph_s3" : alls3,
+                                        "graph_s2" : alls2,
                                     }
                                 };
                                 UsergraphsModel.update(allCondition,operation,function(err,doc){

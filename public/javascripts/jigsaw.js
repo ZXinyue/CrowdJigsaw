@@ -750,7 +750,7 @@ function JigsawPuzzle(config) {
          * Send a msg to the server and the server broadcast it to all players
          **/
         var steps = Number(document.getElementById("steps").innerHTML);
-        var score = instance.score;
+        var score = instance.score+160;
         console.log("finish steps and score",steps,score);
 
         socket.emit('iSolved', {
@@ -3289,15 +3289,19 @@ $('#check_button').on('click',function (event) {
 });
 
 $('#hint_button_2').on('click',function (event) {
+    puzzle.undoNextStep();
     puzzle.getHint(2);
 });
 $('#hint_button_3').on('click',function (event) {
+    puzzle.undoNextStep();
     puzzle.getHint(3);
 });
 $('#hint_button_4').on('click',function (event) {
+    puzzle.undoNextStep();
     puzzle.getHint(4);
 });
 $('#hint_button_5').on('click',function (event) {
+    puzzle.undoNextStep();
     puzzle.getHint(5);
 });
 
