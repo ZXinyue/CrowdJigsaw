@@ -105,7 +105,7 @@ function getSelectorImage() {
         $(img).addClass('selector-image');
         img.onload = function () {
             imgReadyCount += 1;
-            if (imgReadyCount >=  (pageCount+1) * 10 && !theOnlyNewRoundDialog) {
+            if (imgReadyCount >=  (pageCount+1) * 1 && !theOnlyNewRoundDialog) {
                 allImageReadyCallback();
                 theOnlyNewRoundDialog = true;
             }
